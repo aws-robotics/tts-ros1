@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tts)
 
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs message_generation rospy rosunit rostest std_msgs sound_play)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs message_generation rospy rosunit std_msgs sound_play)
 
 catkin_python_setup()
 
