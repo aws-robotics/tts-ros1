@@ -45,7 +45,7 @@ class TestPolly(unittest.TestCase):
         from tts.amazonpolly import AmazonPolly
         AmazonPolly()
 
-        boto3_session_class_mock.assert_called()
+        self.assertGreater(boto3_session_class_mock.call_count, 0)
         boto3_session_class_mock.return_value.client.assert_called_with('polly')
 
     @patch('tts.amazonpolly.Session')
@@ -53,7 +53,7 @@ class TestPolly(unittest.TestCase):
         from tts.amazonpolly import AmazonPolly
         polly = AmazonPolly()
 
-        boto3_session_class_mock.assert_called()
+        self.assertGreater(boto3_session_class_mock.call_count, 0)
         boto3_session_class_mock.return_value.client.assert_called_with('polly')
 
         self.assertEqual('text', polly.default_text_type)
@@ -87,7 +87,7 @@ class TestPolly(unittest.TestCase):
         from tts.amazonpolly import AmazonPolly
         polly_under_test = AmazonPolly()
 
-        boto3_session_class_mock.assert_called()
+        self.assertGreater(boto3_session_class_mock.call_count, 0)
         boto3_session_obj_mock.client.assert_called_with('polly')
 
         res = polly_under_test.synthesize(text='hello')
@@ -139,7 +139,7 @@ class TestPolly(unittest.TestCase):
         from tts.amazonpolly import AmazonPolly
         polly_under_test = AmazonPolly()
 
-        boto3_session_class_mock.assert_called()
+        self.assertGreater(boto3_session_class_mock.call_count, 0)
         boto3_session_obj_mock.client.assert_called_with('polly')
 
         res = polly_under_test.synthesize(text='hello')
@@ -169,7 +169,7 @@ class TestPolly(unittest.TestCase):
         with patch.object(sys, 'argv', ['polly_node.py', '-n', 'polly-node']):
             from tts import amazonpolly
             amazonpolly.main()
-            amazon_polly_class_mock.assert_called()
+            self.assertGreater(amazon_polly_class_mock.call_count, 0)
             amazon_polly_class_mock.return_value.start.assert_called_with(node_name='polly-node', service_name='polly')
 
 

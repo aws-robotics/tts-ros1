@@ -41,11 +41,6 @@ This node will require the following AWS account IAM role permissions:
 
 #### Build from Source
 
-If you test this package on versions of Ubuntu older than 18.x (16.04 for example), please upgrade `mock` to the latest version by using `pip`.
-    
-    sudo apt-get python-pip
-    pip install -U mock requests
-    
 Create a ROS workspace and a source directory
 
     mkdir -p ~/ros-workspace/src
