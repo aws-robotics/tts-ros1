@@ -70,7 +70,7 @@ class TestSynthesizer(unittest.TestCase):
         request = SynthesizerRequest(text=test_text, metadata=test_metadata)
         response = speech_synthesizer._node_request_handler(request)
 
-        polly_class_mock.assert_called()
+        self.assertGreater(polly_class_mock.call_count, 0)
         polly_obj_mock.synthesize.assert_called_with(**expected_polly_synthesize_args)
 
         self.assertEqual(response.result, polly_obj_mock.synthesize.return_value.result)
@@ -131,7 +131,7 @@ class TestSynthesizer(unittest.TestCase):
             from tts import synthesizer
             synthesizer.main()
             speech_synthesizer_class_mock.assert_called_with(engine='POLLY_LIBRARY')
-            speech_synthesizer_class_mock.return_value.start.assert_called()
+            self.assertGreater(speech_synthesizer_class_mock.return_value.start.call_count, 0)
 
     @patch('tts.synthesizer.SpeechSynthesizer')
     def test_cli_engine_dispatching_3(self, speech_synthesizer_class_mock):
@@ -140,7 +140,7 @@ class TestSynthesizer(unittest.TestCase):
             from tts import synthesizer
             synthesizer.main()
             speech_synthesizer_class_mock.assert_called_with(engine='POLLY_SERVICE', polly_service_name='apolly')
-            speech_synthesizer_class_mock.return_value.start.assert_called()
+            self.assertGreater(speech_synthesizer_class_mock.return_value.start.call_count, 0)
 
 
 if __name__ == '__main__':
