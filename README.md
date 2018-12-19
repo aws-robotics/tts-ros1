@@ -49,7 +49,7 @@ To install from source, clone the latest version from master branch and compile 
 
 - Clone the package into the source directory
 
-        cd ~/ros-workspace 
+        cd ~/ros-workspace/src 
         git clone https://github.com/aws-robotics/tts-ros1.git
 
 - Install dependencies
