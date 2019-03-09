@@ -10,13 +10,14 @@ notifications:
       - ros-contributions@amazon.com
       - travis-build@platform-notifications.robomaker.aws.a2z.com
 env:
+  global:
+    - GITHUB_ACCOUNT=aws-robotics
+    - PACKAGE_NAME=tts
+    - PACKAGE_LANG=python
   matrix:
-    - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
-    - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
-    - ROS_DISTRO="melodic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
-    - ROS_DISTRO="melodic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
-matrix:
-  install:
-    - git clone https://github.com/ros-industrial/industrial_ci.git .ros_ci
-  script:
-    - .ros_ci/travis.sh
+    - ROS_DISTRO=kinetic ROS_VERSION=1
+    - ROS_DISTRO=melodic ROS_VERSION=1
+install:
+  - git clone https://github.com/aws-robotics/travis-scripts.git .ros_ci
+script:
+  - .ros_ci/ce_build.sh
