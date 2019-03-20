@@ -2,8 +2,8 @@
 Changelog for package tts
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.1 (2019-03-20)
+------------------
 * Merge pull request `#2 <https://github.com/aws-robotics/tts-ros1/issues/2>`_ from yyu/fix
   no assert_called() for older versions of mock
 * no assert_called() for older versions of mock
