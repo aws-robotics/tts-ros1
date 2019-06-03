@@ -12,7 +12,7 @@
 # permissions and limitations under the License.
 
 import os
-from distutils.core import setup
+from setuptools import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 
@@ -29,5 +29,8 @@ setup_args = generate_distutils_setup(
     package_data={
         '': ['data/*.ogg', 'data/models/polly/2016-06-10/*.json']
     },
+    install_requires=[
+        'boto3>=1.9.0'
+    ]
 )
 setup(**setup_args)
