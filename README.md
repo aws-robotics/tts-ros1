@@ -13,9 +13,6 @@ and more details on speech customization are available within the [Amazon Polly 
 and build entirely new categories of speech-enabled products. Amazon Polly is a Text-to-Speech service that uses advanced deep learning technologies to synthesize speech that sounds like a human voice.
 With dozens of lifelike voices across a variety of languages, you can select the ideal voice and build speech-enabled applications that work in many different countries.
 
-**Features in Active Development**:
-- Offline TTS
-
 ### License
 The source code is released under an [Apache 2.0].
 
@@ -41,6 +38,13 @@ You will need to create an AWS Account and configure the credentials to be able 
 
 This node will require the following AWS account IAM role permissions:
 - `polly:SynthesizeSpeech`
+
+### Dependencies
+In order to use the Text-To-Speech node with ROS kinetic you must update the version of boto3 that is installed on your system to at least version 1.9.0. You can do this by running the command:
+
+        pip3 install -U boto3
+
+This step is required before the node will work properly because the version of boto3 is not new enough for the features required by this node. 
 
 ### Binaries
 On Ubuntu you can install the latest version of this package using the following command
