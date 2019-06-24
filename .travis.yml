@@ -12,7 +12,8 @@ notifications:
 env:
   global:
     - GITHUB_ACCOUNT=aws-robotics
-    - PACKAGE_NAME=tts
+    # uncomment PACKAGE_NAMES to build unit tests - REQUIRED if you'd like to run unit tests using colcon
+    - PACKAGE_NAMES=tts
     - PACKAGE_LANG=python
   matrix:
     - ROS_DISTRO=kinetic ROS_VERSION=1
