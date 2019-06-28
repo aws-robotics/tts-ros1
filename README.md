@@ -13,9 +13,6 @@ and more details on speech customization are available within the [Amazon Polly 
 and build entirely new categories of speech-enabled products. Amazon Polly is a Text-to-Speech service that uses advanced deep learning technologies to synthesize speech that sounds like a human voice.
 With dozens of lifelike voices across a variety of languages, you can select the ideal voice and build speech-enabled applications that work in many different countries.
 
-**Features in Active Development**:
-- Offline TTS
-
 ### License
 The source code is released under an [Apache 2.0].
 
@@ -25,9 +22,14 @@ The source code is released under an [Apache 2.0].
 
 ### Supported ROS Distributions
 - Kinetic
-- Lunar
 - Melodic
 
+### Build status
+
+* Travis CI: [![Build Status](https://travis-ci.org/aws-robotics/tts-ros1.svg?branch=master)](https://travis-ci.org/aws-robotics/tts-ros1)
+ * ROS build farm:
+   * ROS Kinetic @ u16.04 Xenial [![Build Status](http://build.ros.org/job/Kbin_uX64__tts__ubuntu_xenial_amd64__binary/badge/icon)](http://build.ros.org/job/Kbin_uX64__tts__ubuntu_xenial_amd64__binary)
+   * ROS Melodic @ u18.04 Bionic [![Build Status](http://build.ros.org/job/Mbin_uB64__tts__ubuntu_bionic_amd64__binary/badge/icon)](http://build.ros.org/job/Mbin_uB64__tts__ubuntu_bionic_amd64__binary)
 
 ## Installation
 
@@ -37,27 +39,43 @@ You will need to create an AWS Account and configure the credentials to be able 
 This node will require the following AWS account IAM role permissions:
 - `polly:SynthesizeSpeech`
 
-### Build and Test
+### Dependencies
+In order to use the Text-To-Speech node with ROS kinetic you must update the version of boto3 that is installed on your system to at least version 1.9.0. You can do this by running the command:
 
-#### Build from Source
+        pip3 install -U boto3
 
-Create a ROS workspace and a source directory
+This step is required before the node will work properly because the version of boto3 is not new enough for the features required by this node. 
 
-    mkdir -p ~/ros-workspace/src
+### Binaries
+On Ubuntu you can install the latest version of this package using the following command
 
-To install from source, clone the latest version from master branch and compile the package
+        sudo apt-get update
+        sudo apt-get install -y ros-$ROS_DISTRO-tts
 
-- Clone the package into the source directory
+### Building from Source
 
-        cd ~/ros-workspace/src 
-        git clone https://github.com/aws-robotics/tts-ros1.git
+To build from source you'll need to create a new workspace, clone and checkout the latest release branch of this repository, install all the dependencies, and compile. If you need the latest development features you can clone from the `master` branch instead of the latest release branch. While we guarantee the release branches are stable, __the `master` should be considered to have an unstable build__ due to ongoing development. 
+
+- Create a ROS workspace and a source directory
+
+        mkdir -p ~/ros-workspace/src
+
+- Clone the package into the source directory . 
+
+    _Note: Replace __`{MAJOR.VERSION}`__ below with the latest major version number to get the latest release branch._
+
+        cd ~/ros-workspace/src
+        git clone https://github.com/aws-robotics/tts-ros1.git -b release-v{MAJOR.VERSION}
 
 - Install dependencies
 
-        cd ~/ros-workspace && sudo apt-get update 
+        cd ~/ros-workspace 
+        sudo apt-get update && rosdep update
         rosdep install --from-paths src --ignore-src -r -y
+        
+_Note: If building the master branch instead of a release branch you may need to also checkout and build the master branches of the packages this package depends on._
 
-- Install the packages
+- Build the packages
 
         cd ~/ros-workspace && colcon build
 
