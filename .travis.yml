@@ -12,11 +12,11 @@ notifications:
 env:
   global:
     - GITHUB_ACCOUNT=aws-robotics
-    - PACKAGE_NAME=tts
+    # uncomment PACKAGE_NAMES to build unit tests - REQUIRED if you'd like to run unit tests using colcon
+    - PACKAGE_NAMES=tts
     - PACKAGE_LANG=python
   matrix:
     - ROS_DISTRO=kinetic ROS_VERSION=1
-    - ROS_DISTRO=lunar   ROS_VERSION=1
     - ROS_DISTRO=melodic ROS_VERSION=1
 install:
   - git clone https://github.com/aws-robotics/travis-scripts.git .ros_ci
