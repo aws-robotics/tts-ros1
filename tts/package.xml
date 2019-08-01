@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>tts</name>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
   <description>Package enabling a robot to speak with a human voice by providing a Text-To-Speech ROS service</description>
   <url>http://wiki.ros.org/tts</url>
 
