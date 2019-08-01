@@ -11,8 +11,8 @@ Changelog for package tts
   It's conditionally found in the testing section only so it's only a test_depend
 * Contributors: Tully Foote, Yuan "Forrest" Yu, y²
 
-Forthcoming
------------
+1.0.2 (2019-08-01)
+------------------
 * update changelog to be compatible with catkin_generate_changelog (`#28 <https://github.com/aws-robotics/tts-ros1/issues/28>`_)
   Signed-off-by: y² <forresty@amazon.com>
 * increment patch version (`#27 <https://github.com/aws-robotics/tts-ros1/issues/27>`_)
