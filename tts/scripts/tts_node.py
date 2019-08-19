@@ -52,6 +52,7 @@ read some instructions and immediately get ready for any input.
 
 import json
 import os
+import tempfile
 
 import actionlib
 import rospy
@@ -61,7 +62,7 @@ from tts.srv import Synthesizer
 from sound_play.libsoundplay import SoundClient
 
 # Output files will be symlinked to this path
-SOUND_FILE_PATH = os.path.join(os.sep, 'tmp', 'tts_sound_file')
+SOUND_FILE_PATH = os.path.join(tempfile.gettempdir(), 'tts_sound_file')
 
 def play(filename):
     """plays the wav or ogg file using sound_play"""
@@ -110,7 +111,8 @@ def do_speak(goal):
         # to the soundplay node is a workaround.
         # See: https://github.com/ros-drivers/audio_common/issues/125
         sym_link_path = os.path.abspath(SOUND_FILE_PATH)
-        os.remove(sym_link_path)
+        if os.path.lexists(sym_link_path):
+            os.remove(sym_link_path)
         rospy.loginfo('Will play {}'.format(audio_file))
         rospy.loginfo('Symlinking {} to {}'.format(audio_file, sym_link_path))
         os.symlink(audio_file, sym_link_path)
