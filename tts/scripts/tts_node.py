@@ -114,7 +114,7 @@ def do_speak(goal):
         if os.path.lexists(sym_link_path):
             os.remove(sym_link_path)
         rospy.loginfo('Will play {}'.format(audio_file))
-        rospy.loginfo('Symlinking {} to {}'.format(audio_file, sym_link_path))
+        rospy.logdebug('Symlinking {} to {}'.format(audio_file, sym_link_path))
         os.symlink(audio_file, sym_link_path)
         play(sym_link_path)
         result = audio_file
