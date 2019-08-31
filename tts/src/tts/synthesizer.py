@@ -113,8 +113,8 @@ class SpeechSynthesizer:
         :return: response from AmazonPolly
         """
         if 'output_path' not in kw:
-            tmp_filename = hashlib.md5(kw['text']).hexdigest()
-            tmp_filepath = os.path.join(os.sep, 'tmp', 'voice_{}_{}'.format(tmp_filename, str(time.time())))
+            tmp_filename = hashlib.md5(json.dumps(kw,sort_keys=True)).hexdigest()
+            tmp_filepath = os.path.join(os.sep,'tmp','voice_{}'.format(tmp_filename))
             kw['output_path'] = os.path.abspath(tmp_filepath)
         rospy.loginfo('audio will be saved as {}'.format(kw['output_path']))
 
