@@ -95,7 +95,8 @@ class SpeechSynthesizer:
     class BadEngineError(NameError):
         pass
 
-    def __init__(self, engine='POLLY_SERVICE', polly_service_name='polly'):
+    #TODO: expose this max_cache_bytes value to the roslaunch system (why is rosparam not used in this file?)
+    def __init__(self, engine='POLLY_SERVICE', polly_service_name='polly', max_cache_bytes=100000000):
         if engine not in self.ENGINES:
             msg = 'bad engine {} which is not one of {}'.format(engine, ', '.join(SpeechSynthesizer.ENGINES.keys()))
             raise SpeechSynthesizer.BadEngineError(msg)
@@ -107,7 +108,8 @@ class SpeechSynthesizer:
         self.default_voice_id = 'Joanna'
         self.default_output_format = 'ogg_vorbis'
 
-        self.max_cache_bytes = 10000
+        self.max_cache_bytes = max_cache_bytes
+
     def _call_engine(self, **kw):
         """Call engine to do the job.
 
