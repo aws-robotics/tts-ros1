@@ -113,8 +113,13 @@ class SpeechSynthesizer:
     def _call_engine(self, **kw):
         """Call engine to do the job.
 
-        If no output path is found from input, the audio file will be put into /tmp and the file name will have
-        a prefix of the md5 hash of the text.
+        If no output path is found from input, the audio
+        file will be put into /tmp and the file name will have
+        a prefix of the md5 hash of the text. If a filename is
+        not given, the utterance is added to the cache. If a
+        filename is specified, then we will assume that the
+        file is being managed by the user and it will not
+        be added to the cache.
 
         :param kw: what AmazonPolly needs to synthesize
         :return: response from AmazonPolly
@@ -126,52 +131,55 @@ class SpeechSynthesizer:
                 os.sep, 'tmp', 'voice_{}'.format(tmp_filename))
             kw['output_path'] = os.path.abspath(tmp_filepath)
 
-        # because the hash will include information about any file ending choices, we only
-        # need to look at the hash itself.
-        db = DB()
-        db_search_result = db.ex(
-            'SELECT file, audio_type FROM cache WHERE hash=?', tmp_filename).fetchone()
-        current_time = time.time()
-        if db_search_result:  # then there is data
-            db.ex('update  cache set last_accessed=? where hash=?',
-                  current_time, tmp_filename)
-            synth_result = PollyResponse(json.dumps({
-                'Audio File': db_search_result['file'],
-                'Audio Type': db_search_result['audio_type'],
-                'Amazon Polly Response Metadata': ''
-            }))
-            rospy.loginfo('audio file was already cached at: %s',
-                          db_search_result['file'])
-        else:  # havent cached this yet
+            # because the hash will include information about any file ending choices, we only
+            # need to look at the hash itself.
+            db = DB()
+            db_search_result = db.ex(
+                'SELECT file, audio_type FROM cache WHERE hash=?', tmp_filename).fetchone()
+            current_time = time.time()
+            if db_search_result:  # then there is data
+                db.ex('update  cache set last_accessed=? where hash=?',
+                      current_time, tmp_filename)
+                synth_result = PollyResponse(json.dumps({
+                    'Audio File': db_search_result['file'],
+                    'Audio Type': db_search_result['audio_type'],
+                    'Amazon Polly Response Metadata': ''
+                }))
+                rospy.loginfo('audio file was already cached at: %s',
+                              db_search_result['file'])
+            else:  # havent cached this yet
+                synth_result = self.engine(**kw)
+                res_dict = json.loads(synth_result.result)
+                file_name = res_dict['Audio File']
+                if file_name:
+                    file_size = os.path.getsize(file_name)
+                    db.ex('''insert into cache(
+                        hash, file, audio_type, last_accessed,size)
+                        values (?,?,?,?,?)''', tmp_filename, file_name,
+                          res_dict['Audio Type'], current_time, file_size)
+                    size_res = db.ex(
+                        'select total_size, id, num_files FROM size').fetchone()
+                    total_size = size_res['total_size'] + file_size
+                    num_files = size_res['num_files'] + 1
+                    rospy.loginfo(
+                        'generated new file, saved to %s and cached', file_name)
+                    # make sure the cache hasn't grown too big
+                    while total_size > self.max_cache_bytes and num_files > 1:
+                        remove_res = db.ex(
+                            'select hash, file, min(last_accessed), size from cache'
+                        ).fetchone()
+                        os.remove(remove_res['file'])
+                        db.ex('delete from cache where hash=?',
+                              remove_res['hash'])
+                        total_size = total_size - remove_res['size']
+                        num_files = num_files - 1
+                        rospy.loginfo('removing %s to maintain cache size, new size: %i',
+                                      remove_res['file'], total_size)
+                    db.ex(
+                        'replace into size(id, total_size, num_files) values (?,?,?)',
+                        1, total_size, num_files)
+        else:
             synth_result = self.engine(**kw)
-            res_dict = json.loads(synth_result.result)
-            file_name = res_dict['Audio File']
-            if file_name:
-                file_size = os.path.getsize(file_name)
-                db.ex('''insert into cache(
-                    hash, file, audio_type, last_accessed,size)
-                    values (?,?,?,?,?)''', tmp_filename, file_name,
-                      res_dict['Audio Type'], current_time, file_size)
-                size_res = db.ex(
-                    'select total_size, id, num_files FROM size').fetchone()
-                total_size = size_res['total_size'] + file_size
-                num_files = size_res['num_files'] + 1
-                rospy.loginfo(
-                    'generated new file, saved to %s and cached', file_name)
-                # make sure the cache hasn't grown too big
-                while total_size > self.max_cache_bytes and num_files > 1:
-                    remove_res = db.ex(
-                        'select hash, file, min(last_accessed), size from cache'
-                    ).fetchone()
-                    os.remove(remove_res['file'])
-                    db.ex('delete from cache where hash=?', remove_res['hash'])
-                    total_size = total_size - remove_res['size']
-                    num_files = num_files - 1
-                    rospy.loginfo('removing %s to maintain cache size, new size: %i',
-                                  remove_res['file'], total_size)
-                db.ex(
-                    'replace into size(id, total_size, num_files) values (?,?,?)',
-                    1, total_size, num_files)
 
         return synth_result
 
