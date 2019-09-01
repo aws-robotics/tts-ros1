@@ -68,12 +68,12 @@ class DB(object):
             file text NOT NULL,
             audio_type text NOT NULL,
             last_accessed integer NOT NULL,
-            size real NOT NULL
+            size integer NOT NULL
             );''')
 
         self.ex('''CREATE TABLE IF NOT EXISTS size (
             id integer PRIMARY KEY,
-            total_size real NOT NULL,
+            total_size integer NOT NULL,
             num_files integer NOT NULL
             );''')
 
