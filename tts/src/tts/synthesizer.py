@@ -140,6 +140,7 @@ class SpeechSynthesizer:
                 'Audio Type': db_search_result['audio_type'],
                 'Amazon Polly Response Metadata': ''
                 }))
+            rospy.loginfo('audio file was already cached at: %s',db_search_result['file'])
         else:  # havent cached this yet
             synth_result = self.engine(**kw)
             res_dict = json.loads(synth_result.result)
@@ -153,23 +154,22 @@ class SpeechSynthesizer:
                 size_res = db.ex('select total_size, id, num_files FROM size').fetchone()
                 total_size = size_res['total_size'] + file_size
                 num_files = size_res['num_files'] + 1
+                rospy.loginfo('generated new file, saved to %s and cached',file_name)
                 # make sure the cache hasn't grown too big
                 while total_size > self.max_cache_bytes and num_files >1:
-                    res = db.ex(
+                    remove_res = db.ex(
                         'select hash, file, min(last_accessed), size from cache'
                     ).fetchone()
-                    os.remove(res['file'])
-                    db.ex('delete from cache where hash=?', res['hash'])
-                    total_size = total_size - res['size']
+                    os.remove(remove_res['file'])
+                    db.ex('delete from cache where hash=?', remove_res['hash'])
+                    total_size = total_size - remove_res['size']
                     num_files = num_files - 1
+                    rospy.loginfo('removing %s to maintain cache size, new size: %i',
+                            remove_res['file'],total_size)
                 db.ex(
                     'replace into size(id, total_size, num_files) values (?,?,?)',
                     1, total_size, num_files)
 
-        # else:
-            # rospy.loginfo('audio will be saved as {}'.format(kw['output_path']))
-
-        # TODO check if the file exists on the local system first, return that if it does
         return synth_result
 
     def _parse_request_or_raise(self, request):
