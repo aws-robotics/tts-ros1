@@ -9,7 +9,7 @@ import rospy
 
 
 class DB(object):
-    """DB a class to manage the database for tracking chanced files"""
+    """DB a class to manage the database for tracking cached files"""
 
     def __init__(self, db_location='/tmp/polly.db'):
         """Sets up and returns the database for tracking cached files
