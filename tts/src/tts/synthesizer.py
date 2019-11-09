@@ -141,7 +141,7 @@ class SpeechSynthesizer:
             if db_search_result:  # then there is data
                 # check if the file exists, if not, remove from db
                 # TODO: add a test that deletes a file without telling the db and tries to synthesize it
-                if os.path.exists(db_search_result):
+                if os.path.exists(db_search_result['file']):
                     file_found = True
                     db.ex('update  cache set last_accessed=? where hash=?',
                           current_time, tmp_filename)
