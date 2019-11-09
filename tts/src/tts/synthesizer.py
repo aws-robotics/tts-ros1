@@ -153,6 +153,8 @@ class SpeechSynthesizer:
                     rospy.loginfo('audio file was already cached at: %s',
                                   db_search_result['file'])
                 else:
+                    rospy.logwarn(
+                        'A file in the database did not exist on the disk, removing from db')
                     db.remove_file(db_search_result['file'])
             if not file_found:  # havent cached this yet
                 synth_result = self.engine(**kw)
