@@ -64,6 +64,11 @@ class DB(object):
         been deleted without notifying the database. This will self
         resolve with time."""
         return self.ex('SELECT SUM(size) FROM cache')
+
+    def get_num_files(self):
+        """Return the number of files cached in the database"""
+        return self.ex('SELECT Count(*) FROM cache').fetchone()
+
     def __del__(self):
         self.conn.close()
 
