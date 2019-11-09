@@ -57,9 +57,6 @@ class DB(object):
                 to_return = self.conn.execute(command)
         return to_return
 
-    def con(self):
-        return self.conn
-
     def __del__(self):
         self.conn.close()
 
