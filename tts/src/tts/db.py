@@ -35,6 +35,7 @@ class DB(object):
                 "unable to connect to database at location: %s",
                 format(db_location))
             rospy.logerr("error: %s", format(e))
+            raise
         self.conn.row_factory = sqlite3.Row
         self.make_db()
 
