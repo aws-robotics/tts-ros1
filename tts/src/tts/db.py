@@ -95,13 +95,3 @@ class DB(object):
             last_accessed integer NOT NULL,
             size integer NOT NULL
             );''')
-
-        self.ex('''CREATE TABLE IF NOT EXISTS size (
-            id integer PRIMARY KEY,
-            total_size integer NOT NULL,
-            num_files integer NOT NULL
-            );''')
-
-        self.ex('''insert or ignore into size (
-            id, total_size, num_files)
-            values (1,0,0);''')
