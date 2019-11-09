@@ -63,11 +63,11 @@ class DB(object):
         Note: the actual on disk size could be smaller if files have
         been deleted without notifying the database. This will self
         resolve with time."""
-        return self.ex('SELECT COALESCE(SUM(size),0) FROM cache')
+        return self.ex('SELECT COALESCE(SUM(size),0) FROM cache').fetchone()[0]
 
     def get_num_files(self):
         """Return the number of files cached in the database"""
-        return self.ex('SELECT Count(*) FROM cache').fetchone()
+        return self.ex('SELECT Count(*) FROM cache').fetchone()[0]
 
     def remove_file(self, fn):
         """Remove a file from the database and delete the file
