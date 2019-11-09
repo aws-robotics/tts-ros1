@@ -164,20 +164,16 @@ class SpeechSynthesizer:
                         hash, file, audio_type, last_accessed,size)
                         values (?,?,?,?,?)''', tmp_filename, file_name,
                           res_dict['Audio Type'], current_time, file_size)
-                    total_size = db.get_size()
-                    num_files = db.get_num_files()
                     rospy.loginfo(
                         'generated new file, saved to %s and cached', file_name)
                     # make sure the cache hasn't grown too big
-                    while total_size > self.max_cache_bytes and num_files > 1:
+                    while db.get_size() > self.max_cache_bytes and db.get_num_files() > 1:
                         remove_res = db.ex(
                             'select file, min(last_accessed), size from cache'
                         ).fetchone()
                         db.remove_file(remove_res['file'])
-                        total_size = total_size - remove_res['size']
-                        num_files = num_files - 1
                         rospy.loginfo('removing %s to maintain cache size, new size: %i',
-                                      remove_res['file'], total_size)
+                                      remove_res['file'], db.get_size())
         else:
             synth_result = self.engine(**kw)
 
