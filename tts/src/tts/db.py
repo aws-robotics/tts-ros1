@@ -69,6 +69,21 @@ class DB(object):
         """Return the number of files cached in the database"""
         return self.ex('SELECT Count(*) FROM cache').fetchone()
 
+    def remove_file(self, fn):
+        """Remove a file from the database and delete the file
+
+        This function removes the file from the disk before 
+        removing it from the database. This is the safest
+        order to operate in, preventing items falling out
+        of the cache while still existing. 
+
+        Args:
+            fn: the filename of the file to remove
+        """
+        if os.path.exists(fn):
+            os.remove(fn)
+        self.ex('delete from cache where file=?', fn)
+
     def __del__(self):
         self.conn.close()
 
