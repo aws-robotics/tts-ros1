@@ -57,6 +57,13 @@ class DB(object):
                 to_return = self.conn.execute(command)
         return to_return
 
+    def get_size(self):
+        """Return the sum size of the files in the database
+
+        Note: the actual on disk size could be smaller if files have
+        been deleted without notifying the database. This will self
+        resolve with time."""
+        return self.ex('SELECT SUM(size) FROM cache')
     def __del__(self):
         self.conn.close()
 
