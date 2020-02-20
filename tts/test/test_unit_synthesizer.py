@@ -142,6 +142,58 @@ class TestSynthesizer(unittest.TestCase):
             speech_synthesizer_class_mock.assert_called_with(engine='POLLY_SERVICE', polly_service_name='apolly')
             self.assertGreater(speech_synthesizer_class_mock.return_value.start.call_count, 0)
 
+    def test_repeated_synthesis(self):
+        from db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+
+        db = DB()
+        init_num_files = db.get_num_files()
+
+        new_text = uuid.uuid4().hex
+        for i in range(4):
+            speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+            request = SynthesizerRequest(text=new_text, metadata={})
+            response = speech_synthesizer._node_request_handler(request)
+
+            self.assertEqual(db.get_num_files(), init_num_files + 1)
+
+        
+    def test_multiple_novel(self):
+        from db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+
+        db = DB()
+        init_num_files = db.get_num_files()
+        for i in range(4):
+            speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata=test_metadata)
+            response = speech_synthesizer._node_request_handler(request)
+
+            self.assertEqual(db.get_num_files(), init_num_files + i + 1)
+
+    def test_no_connection(self):
+        from db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+
+        db = DB()
+        init_num_files = db.get_num_files()
+
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+        speech_synthesizer.engine.set_connection(False)
+
+        request = SynthesizerRequest(text=uuid.uuid4().hex, metadata=test_metadata)
+        response = speech_synthesizer._node_request_handler(request)
+
+        self.assertEqual(db.get_num_files(), init_num_files)
+
+
+
 
 if __name__ == '__main__':
     import rosunit

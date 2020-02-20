@@ -87,9 +87,73 @@ class SpeechSynthesizer:
             node = AmazonPolly()
             return node.synthesize(**kwargs)
 
+    class DummyEngine:
+        """A dummy engine which exists to facilitate testing. Can either
+        be set to act as if it is connected or disconnected. Will create files where
+        they are expected, but they will not be actual audio files."""
+
+        def __init__(self):
+            self.connected = True
+            self.file_size = 50000
+
+        def __call__(self, **kwargs):
+            """put a file at the specified location and return resonable dummy
+            values. If not connected, fills in the Exception fields.
+
+            Args:
+                **kwarks: dictionary with fields: output_format, voice_id, sample_rate,
+                          text_type, text, output_path
+
+            Returns: A json version of a string with fields: Audio File, Audio Type, 
+                Exception (if there is an exception), Traceback (if there is an exception), 
+                and if succesful Amazon Polly Response Metadata
+            """
+            if self.connected:
+                with open(kwargs['output_path'], 'wb') as f:
+                    f.write(os.urandom(self.file_size))
+                return json.dumps({
+                    'Audio File': kwargs['output_path'],
+                    'Audio Type': kwargs['OutputFormat'] if kwargs['OutputFormat'] else 'ogg_vorbis',
+                    'Amazon Polly Response Metadata': {'some header': 'some data'}
+                    })
+            else:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                error_ogg_filename = 'connerror.ogg'
+                error_details = {
+                    'Audio File': os.path.join(current_dir, '../src/tts/data', error_ogg_filename),
+                    'Audio Type': 'ogg',
+                    'Exception': {
+                        'dummy head': 'dummy val'
+                        # 'Type': str(exc_type),
+                        # 'Module': exc_type.__module__,
+                        # 'Name': exc_type.__name__,
+                        # 'Value': str(e),
+                    },
+                    'Traceback': 'some traceback'
+                }
+                return json.dumps(error_details)
+
+
+        def set_connection(self, connected):
+            """set the connection state
+
+            Args:
+                connected: boolean, whether to act connected or not
+            """
+            self.connected = connected
+
+        def set_file_sizes(self, size):
+            """Set the target file size for future files in bytes
+
+            Args:
+                size: the number of bytes to make the next files
+            """
+            self.file_size = size
+
     ENGINES = {
         'POLLY_SERVICE': PollyViaNode,
         'POLLY_LIBRARY': PollyDirect,
+        'DUMMY': DummyEngine,
     }
 
     class BadEngineError(NameError):
