@@ -159,23 +159,24 @@ class SpeechSynthesizer:
             if not file_found:  # havent cached this yet
                 synth_result = self.engine(**kw)
                 res_dict = json.loads(synth_result.result)
-                file_name = res_dict['Audio File']
-                if file_name:
-                    file_size = os.path.getsize(file_name)
-                    db.ex('''insert into cache(
-                        hash, file, audio_type, last_accessed,size)
-                        values (?,?,?,?,?)''', tmp_filename, file_name,
-                          res_dict['Audio Type'], current_time, file_size)
-                    rospy.loginfo(
-                        'generated new file, saved to %s and cached', file_name)
-                    # make sure the cache hasn't grown too big
-                    while db.get_size() > self.max_cache_bytes and db.get_num_files() > 1:
-                        remove_res = db.ex(
-                            'select file, min(last_accessed), size from cache'
-                        ).fetchone()
-                        db.remove_file(remove_res['file'])
-                        rospy.loginfo('removing %s to maintain cache size, new size: %i',
-                                      remove_res['file'], db.get_size())
+                if 'Exception' not in res_dict:
+                    file_name = res_dict['Audio File']
+                    if file_name:
+                        file_size = os.path.getsize(file_name)
+                        db.ex('''insert into cache(
+                            hash, file, audio_type, last_accessed,size)
+                            values (?,?,?,?,?)''', tmp_filename, file_name,
+                              res_dict['Audio Type'], current_time, file_size)
+                        rospy.loginfo(
+                            'generated new file, saved to %s and cached', file_name)
+                        # make sure the cache hasn't grown too big
+                        while db.get_size() > self.max_cache_bytes and db.get_num_files() > 1:
+                            remove_res = db.ex(
+                                'select file, min(last_accessed), size from cache'
+                            ).fetchone()
+                            db.remove_file(remove_res['file'])
+                            rospy.loginfo('removing %s to maintain cache size, new size: %i',
+                                          remove_res['file'], db.get_size())
         else:
             synth_result = self.engine(**kw)
 
