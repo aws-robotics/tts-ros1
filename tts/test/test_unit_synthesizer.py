@@ -143,7 +143,7 @@ class TestSynthesizer(unittest.TestCase):
             self.assertGreater(speech_synthesizer_class_mock.return_value.start.call_count, 0)
 
     def test_repeated_synthesis(self):
-        from db import DB
+        from tts.db import DB
         from tts.synthesizer import SpeechSynthesizer
         from tts.srv import SynthesizerRequest
         import uuid
@@ -161,7 +161,7 @@ class TestSynthesizer(unittest.TestCase):
 
         
     def test_multiple_novel(self):
-        from db import DB
+        from tts.db import DB
         from tts.synthesizer import SpeechSynthesizer
         from tts.srv import SynthesizerRequest
         import uuid
@@ -176,7 +176,7 @@ class TestSynthesizer(unittest.TestCase):
             self.assertEqual(db.get_num_files(), init_num_files + i + 1)
 
     def test_no_connection(self):
-        from db import DB
+        from tts.db import DB
         from tts.synthesizer import SpeechSynthesizer
         from tts.srv import SynthesizerRequest
         import uuid
