@@ -175,6 +175,38 @@ class TestSynthesizer(unittest.TestCase):
 
             self.assertEqual(db.get_num_files(), init_num_files + i + 1)
 
+    def test_lost_file(self):
+        from tts.db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+        import os
+        import json
+
+        db = DB()
+        init_num_files = db.get_num_files()
+        req_text=uuid.uuid4().hex
+
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+
+        request = SynthesizerRequest(text=req_text, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file1 = res_dict['Audio File']
+
+        self.assertEqual(db.get_num_files(), init_num_files + 1)
+
+        os.remove(audio_file1)
+
+        request = SynthesizerRequest(text=req_text, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file2 = res_dict['Audio File']
+
+        self.assertEqual(db.get_num_files(), init_num_files + 1)
+        self.assertEqual(audio_file1, audio_file2)
+        self.assertTrue(os.path.exists(audio_file2))
+
     def test_no_connection(self):
         from tts.db import DB
         from tts.synthesizer import SpeechSynthesizer
