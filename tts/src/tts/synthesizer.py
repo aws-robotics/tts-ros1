@@ -196,6 +196,7 @@ class SpeechSynthesizer:
             tmp_filepath = os.path.join(
                 os.sep, 'tmp', 'voice_{}'.format(tmp_filename))
             kw['output_path'] = os.path.abspath(tmp_filepath)
+            rospy.loginfo('managing file with name: {}'.format(tmp_filename))
 
             # because the hash will include information about any file ending choices, we only
             # need to look at the hash itself.
@@ -223,6 +224,7 @@ class SpeechSynthesizer:
                         'A file in the database did not exist on the disk, removing from db')
                     db.remove_file(db_search_result['file'])
             if not file_found:  # havent cached this yet
+                rospy.loginfo('Caching file')
                 synth_result = self.engine(**kw)
                 res_dict = json.loads(synth_result.result)
                 if 'Exception' not in res_dict:
