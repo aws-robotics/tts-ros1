@@ -170,7 +170,7 @@ class TestSynthesizer(unittest.TestCase):
         init_num_files = db.get_num_files()
         for i in range(4):
             speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
-            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata=test_metadata)
+            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
             response = speech_synthesizer._node_request_handler(request)
 
             self.assertEqual(db.get_num_files(), init_num_files + i + 1)
@@ -187,7 +187,7 @@ class TestSynthesizer(unittest.TestCase):
         speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
         speech_synthesizer.engine.set_connection(False)
 
-        request = SynthesizerRequest(text=uuid.uuid4().hex, metadata=test_metadata)
+        request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
         response = speech_synthesizer._node_request_handler(request)
 
         self.assertEqual(db.get_num_files(), init_num_files)
