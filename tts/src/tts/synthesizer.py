@@ -111,11 +111,13 @@ class SpeechSynthesizer:
             if self.connected:
                 with open(kwargs['output_path'], 'wb') as f:
                     f.write(os.urandom(self.file_size))
-                return json.dumps({
+                output_format = kwargs['OutputFormat'] if 'OutputFormat' in kwargs else 'ogg_vorbis'
+                resp = json.dumps({
                     'Audio File': kwargs['output_path'],
-                    'Audio Type': kwargs['OutputFormat'] if kwargs['OutputFormat'] else 'ogg_vorbis',
+                    'Audio Type': output_format,
                     'Amazon Polly Response Metadata': {'some header': 'some data'}
                     })
+                return SynthesizerResponse(resp)
             else:
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 error_ogg_filename = 'connerror.ogg'
@@ -131,7 +133,7 @@ class SpeechSynthesizer:
                     },
                     'Traceback': 'some traceback'
                 }
-                return json.dumps(error_details)
+                return SynthesizerResponse(json.dumps(error_details))
 
 
         def set_connection(self, connected):
