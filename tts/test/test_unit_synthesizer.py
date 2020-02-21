@@ -207,7 +207,7 @@ class TestSynthesizer(unittest.TestCase):
         self.assertEqual(audio_file1, audio_file2)
         self.assertTrue(os.path.exists(audio_file2))
 
-    def test_no_connection(self):
+    def test_no_connection_novel(self):
         from tts.db import DB
         from tts.synthesizer import SpeechSynthesizer
         from tts.srv import SynthesizerRequest
@@ -223,6 +223,31 @@ class TestSynthesizer(unittest.TestCase):
         response = speech_synthesizer._node_request_handler(request)
 
         self.assertEqual(db.get_num_files(), init_num_files)
+
+    def test_no_connection_existing(self):
+        from tts.db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+        import json
+
+        target_text = uuid.uuid4().hex
+
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+        request = SynthesizerRequest(text=target_text, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file1 = res_dict['Audio File']
+
+        speech_synthesizer.engine.set_connection(False)
+
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY')
+        request = SynthesizerRequest(text=target_text, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file2 = res_dict['Audio File']
+
+        self.assertEqual(audio_file1, audio_file2)
 
     def test_file_cleanup(self):
         from tts.db import DB
