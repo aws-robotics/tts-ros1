@@ -224,6 +224,29 @@ class TestSynthesizer(unittest.TestCase):
 
         self.assertEqual(db.get_num_files(), init_num_files)
 
+    def test_file_cleanup(self):
+        from tts.db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+        import json
+        import os
+
+        db = DB()
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY',max_cache_bytes=401)
+        speech_synthesizer.engine.set_file_sizes(100)
+
+        request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file1 = res_dict['Audio File']
+        self.assertTrue(os.path.exists(audio_file1))
+
+        for i in range(5):
+            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
+            response = speech_synthesizer._node_request_handler(request)
+
+        self.assertFalse(os.path.exists(audio_file1))
 
     def test_big_db(self):
         from tts.db import DB
@@ -249,6 +272,45 @@ class TestSynthesizer(unittest.TestCase):
             response = speech_synthesizer._node_request_handler(request)
 
         self.assertEqual(db.get_num_files(), 40)
+
+    def test_file_cleanup_priority(self):
+        from tts.db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
+        import json
+        import os
+
+        db = DB()
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY',max_cache_bytes=401)
+        speech_synthesizer.engine.set_file_sizes(100)
+
+        special_text = uuid.uuid4().hex
+        request = SynthesizerRequest(text=special_text, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file1 = res_dict['Audio File']
+        self.assertTrue(os.path.exists(audio_file1))
+
+        special_text2 = uuid.uuid4().hex
+        request = SynthesizerRequest(text=special_text2, metadata={})
+        response = speech_synthesizer._node_request_handler(request)
+        res_dict = json.loads(response.result)
+        audio_file2 = res_dict['Audio File']
+        self.assertTrue(os.path.exists(audio_file2))
+
+        for z in range(2):
+            for i in range(2):
+                request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
+                response = speech_synthesizer._node_request_handler(request)
+            request = SynthesizerRequest(text=special_text, metadata={})
+            response = speech_synthesizer._node_request_handler(request)
+            res_dict = json.loads(response.result)
+            audio_file1 = res_dict['Audio File']
+
+        self.assertFalse(os.path.exists(audio_file2))
+        self.assertTrue(os.path.exists(audio_file1))
+
 
 if __name__ == '__main__':
     import rosunit
