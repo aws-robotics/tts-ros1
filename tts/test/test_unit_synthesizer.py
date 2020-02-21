@@ -225,7 +225,30 @@ class TestSynthesizer(unittest.TestCase):
         self.assertEqual(db.get_num_files(), init_num_files)
 
 
+    def test_big_db(self):
+        from tts.db import DB
+        from tts.synthesizer import SpeechSynthesizer
+        from tts.srv import SynthesizerRequest
+        import uuid
 
+        db = DB()
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY',max_cache_bytes=401)
+        speech_synthesizer.engine.set_file_sizes(100)
+
+        for i in range(20):
+            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
+            response = speech_synthesizer._node_request_handler(request)
+
+        self.assertEqual(db.get_num_files(), 4)
+
+        speech_synthesizer = SpeechSynthesizer(engine='DUMMY',max_cache_bytes=40001)
+        speech_synthesizer.engine.set_file_sizes(1000)
+
+        for i in range(80):
+            request = SynthesizerRequest(text=uuid.uuid4().hex, metadata={})
+            response = speech_synthesizer._node_request_handler(request)
+
+        self.assertEqual(db.get_num_files(), 40)
 
 if __name__ == '__main__':
     import rosunit
