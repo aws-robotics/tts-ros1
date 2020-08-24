@@ -27,7 +27,6 @@ generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  LIBRARIES tts
   CATKIN_DEPENDS actionlib_msgs message_runtime rospy std_msgs
 )
 
