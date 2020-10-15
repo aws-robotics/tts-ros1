@@ -1,5 +1,5 @@
 repositories:
-  tts-ros1
+  tts-ros1:
     type: git
     url: https://github.com/aws-robotics/tts-ros1
     version: release-latest
