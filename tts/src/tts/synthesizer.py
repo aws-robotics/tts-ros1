@@ -18,8 +18,12 @@ import time
 import json
 import rospy
 import hashlib
+import sqlite3
+import time
 from optparse import OptionParser
 from tts.srv import Synthesizer, SynthesizerResponse
+from tts.srv import PollyResponse
+from tts.db import DB
 
 
 class SpeechSynthesizer:
@@ -83,15 +87,82 @@ class SpeechSynthesizer:
             node = AmazonPolly()
             return node.synthesize(**kwargs)
 
+    class DummyEngine:
+        """A dummy engine which exists to facilitate testing. Can either
+        be set to act as if it is connected or disconnected. Will create files where
+        they are expected, but they will not be actual audio files."""
+
+        def __init__(self):
+            self.connected = True
+            self.file_size = 50000
+
+        def __call__(self, **kwargs):
+            """put a file at the specified location and return resonable dummy
+            values. If not connected, fills in the Exception fields.
+
+            Args:
+                **kwarks: dictionary with fields: output_format, voice_id, sample_rate,
+                          text_type, text, output_path
+
+            Returns: A json version of a string with fields: Audio File, Audio Type, 
+                Exception (if there is an exception), Traceback (if there is an exception), 
+                and if succesful Amazon Polly Response Metadata
+            """
+            if self.connected:
+                with open(kwargs['output_path'], 'wb') as f:
+                    f.write(os.urandom(self.file_size))
+                output_format = kwargs['OutputFormat'] if 'OutputFormat' in kwargs else 'ogg_vorbis'
+                resp = json.dumps({
+                    'Audio File': kwargs['output_path'],
+                    'Audio Type': output_format,
+                    'Amazon Polly Response Metadata': {'some header': 'some data'}
+                    })
+                return SynthesizerResponse(resp)
+            else:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                error_ogg_filename = 'connerror.ogg'
+                error_details = {
+                    'Audio File': os.path.join(current_dir, '../src/tts/data', error_ogg_filename),
+                    'Audio Type': 'ogg',
+                    'Exception': {
+                        'dummy head': 'dummy val'
+                        # 'Type': str(exc_type),
+                        # 'Module': exc_type.__module__,
+                        # 'Name': exc_type.__name__,
+                        # 'Value': str(e),
+                    },
+                    'Traceback': 'some traceback'
+                }
+                return SynthesizerResponse(json.dumps(error_details))
+
+
+        def set_connection(self, connected):
+            """set the connection state
+
+            Args:
+                connected: boolean, whether to act connected or not
+            """
+            self.connected = connected
+
+        def set_file_sizes(self, size):
+            """Set the target file size for future files in bytes
+
+            Args:
+                size: the number of bytes to make the next files
+            """
+            self.file_size = size
+
     ENGINES = {
         'POLLY_SERVICE': PollyViaNode,
         'POLLY_LIBRARY': PollyDirect,
+        'DUMMY': DummyEngine,
     }
 
     class BadEngineError(NameError):
         pass
 
-    def __init__(self, engine='POLLY_SERVICE', polly_service_name='polly'):
+    #TODO: expose this max_cache_bytes value to the roslaunch system (why is rosparam not used in this file?)
+    def __init__(self, engine='POLLY_SERVICE', polly_service_name='polly', max_cache_bytes=100000000):
         if engine not in self.ENGINES:
             msg = 'bad engine {} which is not one of {}'.format(engine, ', '.join(SpeechSynthesizer.ENGINES.keys()))
             raise SpeechSynthesizer.BadEngineError(msg)
@@ -103,22 +174,81 @@ class SpeechSynthesizer:
         self.default_voice_id = 'Joanna'
         self.default_output_format = 'ogg_vorbis'
 
+        self.max_cache_bytes = max_cache_bytes
+
     def _call_engine(self, **kw):
         """Call engine to do the job.
 
-        If no output path is found from input, the audio file will be put into /tmp and the file name will have
-        a prefix of the md5 hash of the text.
+        If no output path is found from input, the audio
+        file will be put into /tmp and the file name will have
+        a prefix of the md5 hash of the text. If a filename is
+        not given, the utterance is added to the cache. If a
+        filename is specified, then we will assume that the
+        file is being managed by the user and it will not
+        be added to the cache.
 
         :param kw: what AmazonPolly needs to synthesize
         :return: response from AmazonPolly
         """
         if 'output_path' not in kw:
-            tmp_filename = hashlib.md5(kw['text']).hexdigest()
-            tmp_filepath = os.path.join(os.sep, 'tmp', 'voice_{}_{}'.format(tmp_filename, str(time.time())))
+            tmp_filename = hashlib.md5(
+                json.dumps(kw, sort_keys=True)).hexdigest()
+            tmp_filepath = os.path.join(
+                os.sep, 'tmp', 'voice_{}'.format(tmp_filename))
             kw['output_path'] = os.path.abspath(tmp_filepath)
-        rospy.loginfo('audio will be saved as {}'.format(kw['output_path']))
+            rospy.loginfo('managing file with name: {}'.format(tmp_filename))
 
-        return self.engine(**kw)
+            # because the hash will include information about any file ending choices, we only
+            # need to look at the hash itself.
+            db = DB()
+            db_search_result = db.ex(
+                'SELECT file, audio_type FROM cache WHERE hash=?', tmp_filename).fetchone()
+            current_time = time.time()
+            file_found = False
+            if db_search_result:  # then there is data
+                # check if the file exists, if not, remove from db
+                # TODO: add a test that deletes a file without telling the db and tries to synthesize it
+                if os.path.exists(db_search_result['file']):
+                    file_found = True
+                    db.ex('update  cache set last_accessed=? where hash=?',
+                          current_time, tmp_filename)
+                    synth_result = PollyResponse(json.dumps({
+                        'Audio File': db_search_result['file'],
+                        'Audio Type': db_search_result['audio_type'],
+                        'Amazon Polly Response Metadata': ''
+                    }))
+                    rospy.loginfo('audio file was already cached at: %s',
+                                  db_search_result['file'])
+                else:
+                    rospy.logwarn(
+                        'A file in the database did not exist on the disk, removing from db')
+                    db.remove_file(db_search_result['file'])
+            if not file_found:  # havent cached this yet
+                rospy.loginfo('Caching file')
+                synth_result = self.engine(**kw)
+                res_dict = json.loads(synth_result.result)
+                if 'Exception' not in res_dict:
+                    file_name = res_dict['Audio File']
+                    if file_name:
+                        file_size = os.path.getsize(file_name)
+                        db.ex('''insert into cache(
+                            hash, file, audio_type, last_accessed,size)
+                            values (?,?,?,?,?)''', tmp_filename, file_name,
+                              res_dict['Audio Type'], current_time, file_size)
+                        rospy.loginfo(
+                            'generated new file, saved to %s and cached', file_name)
+                        # make sure the cache hasn't grown too big
+                        while db.get_size() > self.max_cache_bytes and db.get_num_files() > 1:
+                            remove_res = db.ex(
+                                'select file, min(last_accessed), size from cache'
+                            ).fetchone()
+                            db.remove_file(remove_res['file'])
+                            rospy.loginfo('removing %s to maintain cache size, new size: %i',
+                                          remove_res['file'], db.get_size())
+        else:
+            synth_result = self.engine(**kw)
+
+        return synth_result
 
     def _parse_request_or_raise(self, request):
         """It will raise if request is malformed.
